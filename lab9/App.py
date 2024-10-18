@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
@@ -26,7 +27,7 @@ data = data.replace('?', 0)
 data = data.astype(float)
 
 # Mostrar los datos en la aplicación
-st.write("Vista previa del conjunto de datos", data.head())
+st.write("Muestra del conjunto de datos", data.head())
 
 st.write(data.columns)
 
@@ -100,8 +101,6 @@ fig = plt.figure(figsize=(10, 6))
 sns.barplot(x=filtered_data['STDs'], y=filtered_data['Age'])
 st.pyplot(fig)
 
-# Comparación de modelos predictivos
-st.subheader("Comparación de Modelos")
 if st.sidebar.checkbox("Mostrar comparación de modelos"):
     model_rf = RandomForestClassifier()
     model_lr = LogisticRegression()
@@ -135,6 +134,66 @@ if st.sidebar.checkbox("Mostrar comparación de modelos"):
 
     st.write("Matriz de confusión para K-Nearest Neighbors")
     st.write(confusion_matrix(y_test, y_pred_knn))
+
+# Separar las variables numéricas para analizar la correlación
+numeric = data[['Age', 'Number of sexual partners', 'First sexual intercourse', 'Num of pregnancies', 
+                'Smokes (years)', 'Smokes (packs/year)', 'Hormonal Contraceptives (years)', 'IUD (years)', 
+                'STDs (number)', 'STDs: Number of diagnosis', 'STDs: Time since first diagnosis', 
+                'STDs: Time since last diagnosis']]
+
+# Convertir las variables a numéricas
+for column in numeric.columns:
+    numeric[column] = pd.to_numeric(numeric[column].replace('?', np.nan), errors='coerce')
+
+# Reemplazar los valores faltantes con la media de la columna
+for column in numeric:
+    if column not in ['STDs: Time since first diagnosis', 'STDs: Time since last diagnosis']:
+        numeric[column] = numeric[column].fillna(numeric[column].mean())
+    else:
+        # Reemplazar los valores faltantes con 0
+        numeric[column] = numeric[column].fillna(0).astype(int)
+
+# Matriz de correlación entre variables numéricas    
+correlation_matrix = numeric.corr()
+
+# Crear la visualización interactiva de la matriz de correlación
+st.subheader("Matriz de Correlación Interactiva entre Variables Numéricas")
+
+fig = go.Figure(data=go.Heatmap(
+                z=correlation_matrix.values,
+                x=correlation_matrix.columns,
+                y=correlation_matrix.index,
+                colorscale='RdBu_r',  # Usar la escala RdBu invertida
+                zmin=-1, zmax=1,
+                text=correlation_matrix.values,
+                texttemplate='%{text:.2f}',
+                textfont={"size":10},
+                hoverongaps=False))
+
+fig.update_layout(
+    # title='Matriz de correlación entre variables numéricas',
+    height=600,
+    width=800,
+)
+
+st.plotly_chart(fig)
+
+# Añadir una explicación
+st.write("""
+Esta matriz de correlación interactiva muestra la relación entre las diferentes variables numéricas del conjunto de datos. 
+Los valores varían entre -1 y 1, donde:
+- 1 indica una correlación positiva perfecta (rojo intenso)
+- -1 indica una correlación negativa perfecta (azul intenso)
+- 0 indica que no hay correlación lineal (blanco)
+
+Colores más intensos indican correlaciones más fuertes, mientras que colores más claros indican correlaciones más débiles.
+Puedes interactuar con la gráfica pasando el cursor sobre las celdas para ver los valores exactos.
+""")
+
+st.write(correlation_matrix)
+
+# Comparación de modelos predictivos
+st.subheader("Comparación de Modelos")
 
 # Añadir pie de página o conclusiones
 st.write("Aplicación desarrollada por Abner Ivan Garcia - 21285, Jose Daniel Gomez - 21429")
