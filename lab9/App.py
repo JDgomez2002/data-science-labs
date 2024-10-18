@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 import plotly.express as px
 from plotly import graph_objs as go
@@ -13,9 +14,9 @@ from plotly import graph_objs as go
 st.title("Cuadro de Mando Interactivo - Datos de Pacientes del Hospital Universitario de Caracas")
 
 # Cargar datos
-@st.cache
+@st.cache_data
 def load_data():
-    data = pd.read_csv('risk_factors_cervical_cancer.csv')  
+    data = pd.read_csv('risk_factors_cervical_cancer.csv')
     return data
 
 data = load_data()
@@ -49,13 +50,15 @@ y = data[target_variable]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Selección del modelo a entrenar
-model_choice = st.sidebar.selectbox("Seleccione el modelo", ("Random Forest", "Regresión Logística"))
+model_choice = st.sidebar.selectbox("Seleccione el modelo", ("Random Forest", "Regresión Logística", "K-Nearest Neighbors"))
 
 # Entrenamiento y evaluación del modelo
 if model_choice == 'Random Forest':
     model = RandomForestClassifier()
-else:
+elif model_choice == 'Regresión Logística':
     model = LogisticRegression()
+else:
+    model = KNeighborsClassifier()  # KNN agregado
 
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
@@ -102,29 +105,36 @@ st.subheader("Comparación de Modelos")
 if st.sidebar.checkbox("Mostrar comparación de modelos"):
     model_rf = RandomForestClassifier()
     model_lr = LogisticRegression()
+    model_knn = KNeighborsClassifier()
 
     model_rf.fit(X_train, y_train)
     model_lr.fit(X_train, y_train)
+    model_knn.fit(X_train, y_train)
 
     y_pred_rf = model_rf.predict(X_test)
     y_pred_lr = model_lr.predict(X_test)
+    y_pred_knn = model_knn.predict(X_test)
 
     acc_rf = accuracy_score(y_test, y_pred_rf)
     acc_lr = accuracy_score(y_test, y_pred_lr)
+    acc_knn = accuracy_score(y_test, y_pred_knn)
 
     comparison_data = pd.DataFrame({
-        'Model': ['Random Forest', 'Logistic Regression'],
-        'Accuracy': [acc_rf, acc_lr]
+        'Model': ['Random Forest', 'Logistic Regression', 'K-Nearest Neighbors'],
+        'Accuracy': [acc_rf, acc_lr, acc_knn]
     })
 
     st.write(comparison_data)
 
-    # Mostrar las matrices de confusión de ambos modelos
+    # Mostrar las matrices de confusión de los tres modelos
     st.write("Matriz de confusión para Random Forest")
     st.write(confusion_matrix(y_test, y_pred_rf))
 
     st.write("Matriz de confusión para Regresión Logística")
     st.write(confusion_matrix(y_test, y_pred_lr))
+
+    st.write("Matriz de confusión para K-Nearest Neighbors")
+    st.write(confusion_matrix(y_test, y_pred_knn))
 
 # Añadir pie de página o conclusiones
 st.write("Aplicación desarrollada por Abner Ivan Garcia - 21285, Jose Daniel Gomez - 21429")
