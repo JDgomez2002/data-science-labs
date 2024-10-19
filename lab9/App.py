@@ -148,8 +148,8 @@ Esta matriz de confusión muestra el rendimiento del modelo:
 Un modelo perfecto tendría solo valores en la diagonal principal (arriba izquierda y abajo derecha).
 """)
 
-# Gráficos interactivos con Plotly
-st.subheader("Visualización interactiva")
+# Gráficos enlazados de acuerdo a la variable seleccionada en el sidebar
+st.subheader("Visualización Enlazada")
 visual_type = st.selectbox("Seleccione el tipo de visualización", (
   "Box Plot",
   "Scatter Plot",
@@ -173,6 +173,28 @@ numeric = data[['Age', 'Number of sexual partners', 'First sexual intercourse', 
                 'Smokes (years)', 'Smokes (packs/year)', 'Hormonal Contraceptives (years)', 'IUD (years)', 
                 'STDs (number)', 'STDs: Number of diagnosis', 'STDs: Time since first diagnosis', 
                 'STDs: Time since last diagnosis']]
+
+# Gráfica 1: Gráfico Circular Interactivo
+st.subheader("Gráfico Circular Interactivo")
+fig_pie = px.pie(data, names='Num of pregnancies', color='Num of pregnancies',
+                 labels={'Num of pregnancies': 'Número de Embarazos'},
+                 title='Distribución de Pacientes por Número de Embarazos',
+                 color_discrete_sequence=px.colors.qualitative.Pastel)
+st.plotly_chart(fig_pie)
+
+# Gráfica 2: Gráfico de Dispersión 3D Interactivo
+st.subheader("Gráfico de Dispersión 3D Interactivo")
+fig_scatter_3d = px.scatter_3d(data, x='Age', y='Number of sexual partners', z='STDs: Number of diagnosis', 
+                               color='Dx:Cancer', labels={'Dx:Cancer': 'Diagnóstico de Cáncer'},
+                               title='Relación entre Edad, Número de Parejas Sexuales y Diagnósticos de ETS')
+st.plotly_chart(fig_scatter_3d)
+
+# Gráfica 3: Gráfico de Área Interactivo
+st.subheader("Gráfico de Área Interactivo")
+fig_area = px.area(data, x='Age', y='Number of sexual partners', color='Dx:Cancer',
+                   labels={'Dx:Cancer': 'Diagnóstico de Cáncer'},
+                   title='Distribución Acumulada de la Edad de los Pacientes')
+st.plotly_chart(fig_area)
 
 correlation_matrix = numeric.corr()
 
