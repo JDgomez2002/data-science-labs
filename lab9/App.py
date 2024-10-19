@@ -191,28 +191,51 @@ fig.update_layout(height=1000, width=800)
 st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("Comparación de Modelos")
-model_rf = RandomForestClassifier()
-model_lr = LogisticRegression()
-model_knn = KNeighborsClassifier()
 
-models = [model_rf, model_lr, model_knn]
-model_names = ['Random Forest', 'Logistic Regression', 'K-Nearest Neighbors']
+# Add model selection widget
+available_models = {
+    'Random Forest': RandomForestClassifier(),
+    'Logistic Regression': LogisticRegression(),
+    'K-Nearest Neighbors': KNeighborsClassifier()
+}
 
-accuracies = []
-for model in models:
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    accuracies.append(accuracy_score(y_test, y_pred))
+selected_models = st.multiselect(
+    "Seleccione los modelos para comparar",
+    options=list(available_models.keys()),
+    default=list(available_models.keys())
+)
 
-comparison_data = pd.DataFrame({
-    'Model': model_names,
-    'Accuracy': accuracies
-})
+if selected_models:
+    accuracies = []
+    for model_name in selected_models:
+        model = available_models[model_name]
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        accuracies.append(accuracy_score(y_test, y_pred))
 
-fig = px.bar(comparison_data, x='Model', y='Accuracy', 
-              color='Model', 
-              color_discrete_sequence=[color_palette['accent1'], color_palette['accent2'], color_palette['accent3']])
-st.plotly_chart(fig, use_container_width=True)
+    comparison_data = pd.DataFrame({
+        'Model': selected_models,
+        'Accuracy': accuracies
+    })
+
+    fig = px.bar(comparison_data, x='Model', y='Accuracy',
+                 color='Model',
+                 color_discrete_map={
+                     'Random Forest': color_palette['accent1'],
+                     'Logistic Regression': color_palette['accent2'],
+                     'K-Nearest Neighbors': color_palette['accent3']
+                 },
+                 labels={'Accuracy': 'Precisión', 'Model': 'Modelo'})
+    
+    fig.update_layout(
+        xaxis_title="Modelo",
+        yaxis_title="Precisión",
+        legend_title="Modelos"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Por favor, seleccione al menos un modelo para comparar.")
 
 # Pie de página
 st.markdown(f"""
